@@ -1,0 +1,9 @@
+node_modules/
+dist/
+build/
+Precision Pulse-win32-x64/
+cueTimer-Pro-win32-x64/
+PrecisionPulse_Backup_Temp/
+PrecisionPulse_FullBackup.zip
+*.log
+*.1.3.1

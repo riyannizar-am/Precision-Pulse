@@ -1,0 +1,188 @@
+:root {
+  --bg-dark: #0f172a;
+  --bg-panel: #1e293b;
+  --bg-ribbon: #f5f6f7;
+  --text-ribbon: #444444;
+  --accent-blue: #0078d4;
+  --border-ribbon: #d1d3d4;
+  --row-running: #ef4444;
+  --row-selected: rgba(0, 120, 212, 0.15);
+  --font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-dark);
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Ribbon Header */
+.ribbon-header {
+  background-color: #dde6f2; /* Light blue header like Windows apps */
+  border-bottom: 1px solid var(--border-ribbon);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Tab Navigation */
+.tab-nav {
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  background-color: #f3f5f8;
+}
+
+.menu-btn {
+  padding: 8px 12px;
+  cursor: pointer;
+  background: #2b579a;
+  color: white;
+  border: none;
+  font-size: 14px;
+}
+
+.nav-item {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 12px;
+  color: #333;
+  border: 1px solid transparent;
+  border-bottom: none;
+}
+
+.nav-item:hover { background-color: #ffffff; }
+.nav-item.active {
+  background-color: #ffffff;
+  border-color: var(--border-ribbon);
+  color: var(--accent-blue);
+  font-weight: 600;
+}
+
+/* Ribbon Toolbar Content */
+.ribbon-toolbar {
+  background-color: #ffffff;
+  padding: 5px 15px;
+  display: flex;
+  gap: 15px;
+  min-height: 95px;
+  color: var(--text-ribbon);
+}
+
+.toolbar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border-right: 1px solid #e0e0e0;
+}
+
+.toolbar-group:last-child { border-right: none; }
+
+.group-content {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
+}
+
+.group-label {
+  font-size: 10px;
+  color: #888;
+  margin-top: 5px;
+  text-align: center;
+}
+
+/* Ribbon Buttons */
+.btn-ribbon {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #444;
+  min-width: 55px;
+  transition: all 0.1s;
+}
+
+.btn-ribbon:hover {
+  background-color: #f3f5f8;
+  border-color: #d1d3d4;
+}
+
+.btn-ribbon svg { width: 22px; height: 22px; fill: #555; }
+.btn-ribbon span { font-size: 10px; margin-top: 2px; }
+
+/* Duration & Speed Group Special Styles */
+.duration-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.speed-spinner {
+  display: flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  padding: 1px;
+  background: white;
+}
+
+.speed-spinner input {
+  width: 45px;
+  border: none;
+  text-align: center;
+  font-size: 13px;
+  padding: 2px;
+}
+
+.spinner-btns {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #ccc;
+}
+
+.spin-btn {
+  background: #f0f0f0;
+  border: none;
+  font-size: 8px;
+  padding: 1px 4px;
+  cursor: pointer;
+}
+
+.spin-btn:hover { background: #e0e0e0; }
+
+/* Dashboard & Table (Dark Theme for data) */
+.preview-panel {
+  padding: 15px 30px;
+  background: #111827;
+  border-bottom: 1px solid #374151;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.main-timer-box h1 { font-size: 72px; font-weight: 800; font-variant-numeric: tabular-nums; color: white; }
+
+.table-container { flex: 1; overflow: auto; padding: 10px; background: #0f172a; }
+table { width: 100%; border-collapse: collapse; }
+th { color: #94a3b8; font-size: 11px; padding: 10px; border-bottom: 1px solid #334155; text-transform: uppercase; }
+td { padding: 10px; text-align: center; border-bottom: 1px solid #1e293b; color: #f1f5f9; }
+
+tr.selected td { background-color: #1e293b; border-top: 1px solid var(--accent-blue); border-bottom: 1px solid var(--accent-blue); }
+tr.running td { background-color: #dc2626 !important; color: white !important; font-weight: bold; }
+
+.cell-input { background: #0f172a; border: 1px solid var(--accent-blue); color: white; padding: 4px; text-align: center; width: 100%; }
+
+.hidden { display: none !important; }

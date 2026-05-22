@@ -1,0 +1,64 @@
+================================================================================
+PROJECT HANDOFF: cueTimer Pro Licensing Backend
+================================================================================
+
+HELLO MAC AI,
+I am the Windows Antigravity AI handling the Electron App development for "cueTimer Pro". The user has requested that you build the PHP/MySQL web backend for our software licensing system. 
+
+Here is everything you need to know about what we are building, what I have done, and what you need to do.
+
+--------------------------------------------------------------------------------
+1. PROJECT CONTEXT
+--------------------------------------------------------------------------------
+- We are building a high-precision, broadcast-grade countdown timer using Electron (JavaScript/HTML/CSS).
+- COMPLETED: The core timer engine, the external projector output window, audio/visual alert syncing, offline font rendering, and multi-monitor support.
+- GOAL: We need to protect this software from theft. We are building a hardware-bound activation system.
+- YOUR JOB: Build the PHP/MySQL website backend on "amaudiovisuals.com" (hosted on Hostinger). This backend will act as the "Master Server" to generate, validate, and revoke license keys.
+
+--------------------------------------------------------------------------------
+2. DATABASE SCHEMA REQUIRED
+--------------------------------------------------------------------------------
+You need to create a MySQL database and a table named `licenses` with the following columns:
+- `id` (INT, Auto-increment, Primary Key)
+- `license_key` (VARCHAR, e.g., AM26-A1B2-C3D4)
+- `duration_days` (INT, e.g., 30 or 365)
+- `status` (ENUM: 'unused', 'active', 'deactivated')
+- `hardware_id` (VARCHAR, The unique motherboard/CPU ID of the activated laptop)
+- `computer_name` (VARCHAR, e.g., AV-DEPT-LAPTOP-1)
+- `activation_date` (DATETIME)
+- `expiry_date` (DATETIME)
+
+--------------------------------------------------------------------------------
+3. FILES YOU NEED TO BUILD
+--------------------------------------------------------------------------------
+You need to build two PHP files for the Hostinger server:
+
+FILE 1: `admin.php` (The Dashboard)
+- A simple, clean HTML/PHP page protected by a hardcoded password or simple session login.
+- Feature 1: "Generate Key". A dropdown to select duration (30 days, 1 year) and a button to generate an `AMYY-XXXX-XXXX-XXXX` key. Insert it into the DB as 'unused'.
+- Feature 2: A table displaying all keys from the database, showing their status, the computer name using them, and the expiry date.
+- Feature 3: A "Deactivate" button next to active keys that changes their status to 'deactivated'.
+
+FILE 2: `api.php` (The API Endpoint for the Electron App)
+- This file must accept JSON or form-data POST requests from my Electron app.
+- Endpoint Action 1: `activate`
+  - Input: `license_key`, `hardware_id`, `computer_name`.
+  - Logic: Check if the key exists and is 'unused'. If yes, update it to 'active', link the `hardware_id` and `computer_name`, calculate the `expiry_date` based on `duration_days`.
+  - Output: JSON success message with the exact `expiry_date`.
+- Endpoint Action 2: `check`
+  - Input: `license_key`, `hardware_id`.
+  - Logic: Find the key in the DB. Ensure the `hardware_id` matches.
+  - Output: JSON status ('active' or 'deactivated').
+
+--------------------------------------------------------------------------------
+4. WHAT I WILL DO NEXT (ON WINDOWS)
+--------------------------------------------------------------------------------
+Once you have built the website and it is live, the user will come back to me. 
+I will then implement:
+1. The 10-Minute Trial lock screen.
+2. The `node-machine-id` package to extract the hardware fingerprint.
+3. The HTTP fetch requests to talk to your `api.php`.
+4. The JavaScript Obfuscator to scramble our code and prevent hacking.
+
+Good luck! Build a clean, secure, and reliable PHP backend.
+- The Windows AI

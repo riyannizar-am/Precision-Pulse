@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precision Pulse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        @font-face { font-family: 'Inter'; src: url('fonts/Inter.ttf') format('truetype'); }
+        @font-face { font-family: 'Roboto'; src: url('fonts/Roboto.ttf') format('truetype'); }
+        @font-face { font-family: 'Montserrat'; src: url('fonts/Montserrat.ttf') format('truetype'); }
+        @font-face { font-family: 'Bebas Neue'; src: url('fonts/BebasNeue.ttf') format('truetype'); }
+        @font-face { font-family: 'Share Tech Mono'; src: url('fonts/ShareTechMono.ttf') format('truetype'); }
+
+        :root { --bg-dark: #0f172a; --accent-blue: #0078d4; --font-family: 'Segoe UI', 'Inter', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: var(--font-family); background-color: var(--bg-dark); color: white; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        .ribbon-header { background-color: #dde6f2; border-bottom: 1px solid #d1d3d4; display: flex; flex-direction: column; }
+        .tab-nav { display: flex; align-items: center; padding-left: 10px; background-color: #f3f5f8; }
+        .nav-item { padding: 8px 16px; cursor: pointer; font-size: 12px; color: #333; border: 1px solid transparent; border-bottom: none; }
+        .nav-item.active { background-color: #ffffff; border-color: #d1d3d4; color: var(--accent-blue); font-weight: 600; }
+        .ribbon-toolbar { background-color: #ffffff; padding: 5px 15px; display: none; gap: 15px; min-height: 95px; color: #333; }
+        .ribbon-toolbar.active { display: flex; }
+        .toolbar-group { display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 0 10px; border-right: 1px solid #e0e0e0; }
+        .toolbar-group:last-child { border-right: none; }
+        .group-content { display: flex; gap: 8px; align-items: center; flex: 1; }
+        .group-label { font-size: 10px; color: #888; margin-top: 5px; text-align: center; }
+        .btn-ribbon { background: transparent; border: 1px solid transparent; padding: 4px; border-radius: 3px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #444; min-width: 55px; }
+        .btn-ribbon:hover { background-color: #f3f5f8; border-color: #d1d3d4; }
+        .btn-ribbon svg { width: 22px; height: 22px; }
+        .btn-ribbon span { font-size: 10px; margin-top: 2px; }
+        .btn-ribbon.active-toggle { background-color: #c6f6d5; border-color: #48bb78; }
+        .monitor-select { padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; min-width: 150px; }
+        
+        /* Dashboard Alert Styling - High Priority */
+        .preview-panel { padding: 15px 30px; background: #111827; border-bottom: 1px solid #374151; display: flex; justify-content: space-between; align-items: center; transition: all 0.5s ease-in-out; }
+        .preview-panel.alert-yellow { background: linear-gradient(135deg, #facc15, #eab308) !important; box-shadow: inset 0 0 50px rgba(234,179,8,0.5); color: #000 !important; }
+        .preview-panel.alert-red { background: linear-gradient(135deg, #ef4444, #dc2626) !important; box-shadow: inset 0 0 50px rgba(220,38,38,0.5); color: #fff !important; }
+        .preview-panel.alert-yellow h1, .preview-panel.alert-yellow h3, .preview-panel.alert-yellow p { color: #000 !important; text-shadow: none !important; }
+        .preview-panel.alert-red h1, .preview-panel.alert-red h3, .preview-panel.alert-red p { color: #fff !important; text-shadow: 0 2px 10px rgba(0,0,0,0.3) !important; }
+
+        .main-timer-box h1 { font-size: 84px; font-weight: 800; display: inline-block; position: relative; font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; text-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .sign { display: inline; margin-right: 5px; }
+        .table-container { flex: 1; overflow-y: auto; padding: 10px; background: #0f172a; margin-bottom: 115px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { color: #94a3b8; font-size: 11px; padding: 10px; border-bottom: 1px solid #334155; text-transform: uppercase; }
+        td { padding: 10px; text-align: center; border-bottom: 1px solid #1e293b; color: #f1f5f9; user-select: none; }
+        td[data-f] { cursor: text; }
+        tr.selected td { background-color: #1e293b; border-top: 1px solid var(--accent-blue); border-bottom: 1px solid var(--accent-blue); }
+        tr.running td { background-color: #dc2626 !important; color: white !important; font-weight: bold; }
+        .cell-input { background: #0f172a; border: 1px solid var(--accent-blue); color: white; padding: 4px; text-align: center; width: 100%; font-size: inherit; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; visibility: hidden; opacity: 0; transition: 0.15s; }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal-card { background: white; color: #333; width: 450px; border-radius: 8px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .modal-header { background: #f3f5f8; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; }
+        .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .form-row { display: grid; grid-template-columns: 100px 1fr 60px; align-items: center; gap: 10px; font-size: 14px; }
+        .form-row label { font-weight: 600; }
+        .modal-input { padding: 6px; border: 1px solid #ccc; border-radius: 3px; width: 100%; }
+        .modal-footer { padding: 15px; display: flex; justify-content: center; gap: 30px; border-top: 1px solid #eee; }
+        .audio-row { display: grid; grid-template-columns: 30px 100px 40px 1fr 80px 40px 40px; align-items: center; gap: 8px; font-size: 13px; padding: 8px 0; border-bottom: 1px solid #eee; }
+        .audio-row:last-child { border-bottom: none; }
+        .audio-row span.filename { color: #666; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .icon-btn-small { padding: 4px; border: 1px solid #ddd; background: #f9f9f9; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+        .icon-btn-small:hover { background: #eee; }
+        .icon-btn-small svg { width: 16px; height: 16px; }
+        .icon-btn { background: none; border: none; cursor: pointer; transition: 0.2s; }
+        .icon-btn:hover { transform: scale(1.1); }
+        .icon-btn svg { width: 40px; height: 40px; }
+        .speed-spinner { display: flex; align-items: center; border: 1px solid #ccc; background: white; }
+        .speed-spinner input { width: 45px; border: none; text-align: center; font-size: 13px; }
+        .spin-btn { background: #f0f0f0; border: none; font-size: 8px; padding: 1px 4px; cursor: pointer; }
+
+        /* Lock Screen CSS */
+        #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); z-index: 9999; display: none; align-items: center; justify-content: center; flex-direction: column; color: white; }
+        #lockScreen.active { display: flex; }
+        .lock-box { background: #1e293b; padding: 40px; border-radius: 12px; text-align: center; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid #334155; }
+        .lock-box h2 { margin-bottom: 15px; color: #f87171; font-weight: 800; font-size: 28px; }
+        .lock-box p { margin-bottom: 25px; color: #cbd5e1; line-height: 1.5; font-size: 14px; }
+        .lock-input { background: #0f172a; border: 1px solid #475569; color: white; padding: 12px 15px; border-radius: 6px; width: 100%; font-size: 16px; margin-bottom: 15px; text-align: center; font-family: monospace; letter-spacing: 2px; }
+        .lock-input:focus { outline: none; border-color: #0078d4; }
+        .lock-input-name { background: #0f172a; border: 1px solid #475569; color: white; padding: 10px 15px; border-radius: 6px; width: 100%; font-size: 14px; margin-bottom: 15px; text-align: center; font-family: var(--font-family); letter-spacing: 0.5px; }
+        .lock-input-name:focus { outline: none; border-color: #0078d4; }
+        .lock-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; display: block; text-align: left; }
+        .btn-activate { background: #0078d4; color: white; border: none; padding: 12px 25px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; transition: background 0.2s; }
+        .btn-activate:hover { background: #006abc; }
+        .btn-activate:disabled { background: #334155; cursor: not-allowed; }
+        #activationError { color: #f87171; margin-top: 15px; font-size: 13px; min-height: 20px; font-weight: 600; }
+        #trialBadge, #expiryBadge { position: static; margin-right: 15px; font-size: 11px; font-weight: bold; padding: 4px 12px; border-radius: 12px; display: none; letter-spacing: 0.5px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        #trialBadge { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+        #expiryBadge { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+        #warningBanner { background: linear-gradient(90deg, #b91c1c, #ef4444, #b91c1c); color: white; text-align: center; font-weight: 600; padding: 8px; font-size: 13px; display: none; flex-shrink: 0; border-bottom: 1px solid #7f1d1d; letter-spacing: 0.5px; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        #warningBanner.grace { animation: flashWarning 1s infinite alternate ease-in-out; }
+        @keyframes flashWarning { from { background: linear-gradient(90deg, #991b1b, #dc2626, #991b1b); } to { background: linear-gradient(90deg, #7f1d1d, #991b1b, #7f1d1d); } }
+
+        /* Hotkey Panel */
+        .hotkey-panel { display: flex; align-items: center; gap: 10px; margin-left: 20px; }
+        .hotkey-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 6px 10px; cursor: pointer; transition: all 0.2s; min-width: 52px; }
+        .hotkey-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); transform: translateY(-1px); }
+        .hotkey-btn svg { width: 18px; height: 18px; }
+        .hotkey-btn .hk-label { font-size: 9px; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+        .hotkey-btn .hk-key { font-size: 10px; color: #6366f1; font-weight: 700; background: rgba(99,102,241,0.15); padding: 1px 6px; border-radius: 3px; font-family: monospace; margin-top: 1px; }
+        .hotkey-btn.setting-mode { border-color: #f59e0b; animation: pulseHotkey 1s infinite alternate; }
+        @keyframes pulseHotkey { from { box-shadow: 0 0 4px rgba(245,158,11,0.3); } to { box-shadow: 0 0 12px rgba(245,158,11,0.6); } }
+        .buzzer-play-btn { display: flex; align-items: center; justify-content: center; background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 8px; cursor: pointer; transition: all 0.2s; }
+        .buzzer-play-btn:hover { background: rgba(239,68,68,0.3); transform: scale(1.05); }
+        .buzzer-play-btn svg { width: 22px; height: 22px; }
+
+        /* Branding Logos */
+        .branding-footer { position: fixed; bottom: 15px; right: 15px; display: flex; align-items: center; gap: 16px; z-index: 50; background: rgba(15,23,42,0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 12px 28px; pointer-events: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+        .branding-footer img.precision-logo { height: 64px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+        .branding-footer .by-divider { font-size: 20px; color: #64748b; font-style: italic; }
+        .branding-footer img.am-logo { height: 44px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+    </style>
+</head>
+<body>
+    <div id="warningBanner">WARNING: Software license expires in X days. Please renew.</div>
+    <div id="lockScreen">
+        <div class="lock-box">
+            <img src="logo.png" style="width: 140px; margin-bottom: 15px; border-radius: 8px;">
+            <h2 id="lockTitle">Software Locked</h2>
+            <p id="lockMessage">Please enter a valid activation key to continue using Precision Pulse.</p>
+            <label class="lock-label">Activation Key</label>
+            <input type="text" id="activationKey" class="lock-input" placeholder="AMXX-XXXX-XXXX-XXXX">
+            <label class="lock-label">Machine Name</label>
+            <input type="text" id="lockMachineName" class="lock-input-name" placeholder="e.g. AV-LAPTOP-01">
+            <button id="btnActivate" class="btn-activate">Activate Software</button>
+            <div id="activationError"></div>
+        </div>
+    </div>
+    <header class="ribbon-header">
+        <div class="brand-header" style="display: flex; align-items: center; padding: 10px 20px; background: #0f172a; border-bottom: 1px solid #1e293b;">
+            <img src="precisionlogo.png" style="height: 45px; margin-right: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+            <h1 style="color: white; font-weight: 800; font-size: 20px; margin: 0; letter-spacing: 1px;">PRECISION PULSE</h1>
+        </div>
+        <nav class="tab-nav">
+            <div class="nav-item active" data-tab="commands">Commands</div>
+            <div class="nav-item" data-tab="options">Options</div>
+            <div style="flex:1"></div>
+            <div id="trialBadge">TRIAL MODE: 10:00</div>
+            <div id="expiryBadge">Expires: ...</div>
+        </nav>
+        <div id="ribbon-commands" class="ribbon-toolbar active">
+            <div class="toolbar-group">
+                <div class="group-content">
+                    <button id="btnStart" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="#D32F2F"/></svg><span>Start</span></button>
+                    <button id="btnStop" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z" fill="#455A64"/></svg><span>Stop</span></button>
+                    <button id="btnPause" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="#0277BD"/></svg><span>Pause</span></button>
+                    <button id="btnRestart" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" fill="#00796B"/></svg><span>Restart</span></button>
+                </div>
+                <div class="group-label">Show controls</div>
+            </div>
+            <div class="toolbar-group">
+                <div class="group-content">
+                    <button id="btnAddMin" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="#333"/></svg><span>+ 1m</span></button>
+                    <button id="btnSubMin" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z" fill="#333"/></svg><span>- 1m</span></button>
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+                        <div class="speed-spinner"><input type="text" id="speedInput" value="100%"><div style="display:flex;flex-direction:column;"><button id="speedUp" class="spin-btn">▲</button><button id="speedDown" class="spin-btn">▼</button></div></div>
+                        <span style="font-size:10px;">Speed %</span>
+                    </div>
+                </div>
+                <div class="group-label">Change duration</div>
+            </div>
+            <div class="toolbar-group">
+                <div class="group-content">
+                    <button id="btnClock" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2z" fill="#333"/></svg><span>Clock</span></button>
+                    <button id="btnPresentation" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M21 3H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h5v2h8v-2h5c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" fill="#333"/></svg><span>Presentation</span></button>
+                </div>
+                <div class="group-label">View</div>
+            </div>
+            <div class="toolbar-group">
+                <div class="group-content">
+                    <button id="btnNew" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="#00C853"/></svg><span>New</span></button>
+                    <button id="btnEdit" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#FFB300"/></svg><span>Edit</span></button>
+                    <button id="btnDelete" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12z" fill="#D32F2F"/></svg><span>Delete</span></button>
+                    <button id="btnCopy" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2z" fill="#0277BD"/></svg><span>Copy</span></button>
+                    <button id="btnPaste" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="#BA68C8"/></svg><span>Paste</span></button>
+                </div>
+                <div class="group-label">Edit controls</div>
+            </div>
+        </div>
+        <div id="ribbon-options" class="ribbon-toolbar">
+            <div class="toolbar-group">
+                <div class="group-content">
+                    <div style="display:flex;flex-direction:column;gap:5px;">
+                        <select id="fontSelect" class="monitor-select">
+                            <option value="'Inter', sans-serif">Inter (Clean)</option>
+                            <option value="'Roboto', sans-serif">Roboto (Classic)</option>
+                            <option value="'Montserrat', sans-serif">Montserrat (Bold)</option>
+                            <option value="'Bebas Neue', cursive">Bebas Neue (Tall)</option>
+                            <option value="'Share Tech Mono', monospace">Digital (Tech)</option>
+                        </select>
+                        <div style="display:flex;align-items:center;gap:5px;">
+                            <span style="font-size:10px;color:#666;">Size:</span>
+                            <input type="range" id="scaleSlider" min="10" max="40" value="20" style="width: 70px;">
+                            <span id="scaleValue" style="font-size:10px;font-weight:bold;width:25px;">20vw</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="group-label">Appearance</div>
+            </div>
+            <div class="toolbar-group">
+                <div class="group-content">
+                    <div style="display:flex;flex-direction:column;gap:5px;">
+                        <select id="monitorSelect" class="monitor-select"><option value="auto">AUTO (Detect HDMI)</option></select>
+                        <span style="font-size:10px;color:#666;">Choose where Fullscreen opens</span>
+                    </div>
+                </div>
+                <div class="group-label">Fullscreen monitor</div>
+            </div>
+            <div class="toolbar-group">
+                <div class="group-content">
+                    <button id="btnAudioSettings" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z" fill="#333"/></svg><span>Audio</span></button>
+                </div>
+                <div class="group-label">Audio Settings</div>
+            </div>
+            <div class="toolbar-group">
+                <div class="group-content">
+                    <button id="btnLicenseSettings" class="btn-ribbon"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="#333"/></svg><span>License</span></button>
+                </div>
+                <div class="group-label">Security</div>
+            </div>
+            <div class="toolbar-group" style="border-left: 1px solid #d1d3d4; padding-left: 15px;">
+                <div class="group-content">
+                    <div style="display: flex; gap: 8px;">
+                        <div class="hotkey-btn" id="hkStart" title="Click to set hotkey for Start" style="background: #f8fafc; border-color: #e2e8f0;"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" fill="#4ade80"/></svg><span class="hk-label" style="color: #475569;">Start</span><span class="hk-key" id="hkStartKey">S</span></div>
+                        <div class="hotkey-btn" id="hkPause" title="Click to set hotkey for Pause" style="background: #f8fafc; border-color: #e2e8f0;"><svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="#60a5fa"/></svg><span class="hk-label" style="color: #475569;">Pause</span><span class="hk-key" id="hkPauseKey">T</span></div>
+                        <div class="hotkey-btn" id="hkReset" title="Click to set hotkey for Reset" style="background: #f8fafc; border-color: #e2e8f0;"><svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" fill="#fbbf24"/></svg><span class="hk-label" style="color: #475569;">Reset</span><span class="hk-key" id="hkResetKey">R</span></div>
+                        <div class="hotkey-btn" id="hkBuzzer" title="Click to set hotkey for Buzzer" style="background: #f8fafc; border-color: #e2e8f0;"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" fill="#f87171"/></svg><span class="hk-label" style="color: #475569;">Buzzer</span><span class="hk-key" id="hkBuzzerKey">B</span></div>
+                    </div>
+                </div>
+                <div class="group-label">Hot Keys</div>
+            </div>
+        </div>
+    </header>
+    <div id="previewPanel" class="preview-panel">
+        <div class="main-timer-box"><p id="activeCueName">READY</p><h1 id="mainDisplay">00:00</h1></div>
+        <div class="hotkey-panel">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <button class="buzzer-play-btn" id="btnBuzzerPlay" title="Play buzzer sound"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3z" fill="#ef4444"/><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM19 12c0 2.97-1.65 5.54-4 6.71v-2.18c1.42-.89 2.42-2.56 2.42-4.53 0-1.97-1-3.64-2.42-4.53V5.29c2.35 1.17 4 3.74 4 6.71z" fill="#ef4444"/></svg></button>
+                <span style="font-size: 10px; color: #94a3b8; font-weight: 600; margin-top: 4px; text-transform: uppercase;">Buzzer</span>
+            </div>
+        </div>
+        <div style="text-align:right;"><p id="endLabel" style="color:#94a3b8;font-size:11px;">END ACTION</p><h3 id="activeEndAction" style="color:#6366f1;">Overtime</h3></div>
+    </div>
+    <div class="table-container"><table id="cueTable"><thead><tr><th width="40">ID</th><th>Name</th><th width="120">Duration</th><th width="80">Speed</th><th width="100">Type</th><th width="100">Alert 1</th><th width="100">Alert 2</th><th width="120">End Action</th></tr></thead><tbody id="cueTableBody"></tbody></table></div>
+    <div class="branding-footer">
+        <img src="precisionlogo.png" class="precision-logo" alt="Precision Pulse">
+        <span class="by-divider">by</span>
+        <img src="amlogo.png" class="am-logo" alt="AM Audiovisuals">
+    </div>
+    <div id="modalNew" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header"><span id="mTitle">New Timer</span><button style="border:none;background:none;font-size:18px;cursor:pointer;" onclick="app.closeModal()">×</button></div>
+            <div class="modal-body">
+                <div class="form-row"><label>ID:</label><input type="text" id="mId" class="modal-input" disabled></div>
+                <div class="form-row"><label>Name:</label><input type="text" id="mName" class="modal-input" placeholder="Enter Name"></div>
+                <div class="form-row"><label>Timer Type:</label><select id="mType" class="modal-input"><option>Countdown</option><option>Clock</option><option>Count up</option><option>Stopwatch</option></select></div>
+                <div class="form-row"><label>Countdown:</label><input type="text" id="mDuration" class="modal-input" value="10:00"></div>
+                <div class="form-row"><label>Alert1:</label><input type="text" id="mAlert1" class="modal-input" value="01:30"><span>Show <input type="checkbox" id="mAlert1Show" checked></span></div>
+                <div class="form-row"><label>Alert2:</label><input type="text" id="mAlert2" class="modal-input" value="00:30"><span>Show <input type="checkbox" id="mAlert2Show" checked></span></div>
+                <div class="form-row"><label>End Action:</label><select id="mAction" class="modal-input"><option>Overtime</option><option>Hold</option><option>Stop</option><option>Repeat</option><option>Start Next</option></select></div>
+                <div class="form-row"><label>Speed:</label><div class="speed-spinner"><input type="text" id="mSpeed" value="100%"><div style="display:flex;flex-direction:column;"><button class="spin-btn">▲</button><button class="spin-btn">▼</button></div></div></div>
+            </div>
+            <div class="modal-footer"><button class="icon-btn" onclick="app.saveModal()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#4CAF50"/><path d="M9 16.2l-3.5-3.5 1.4-1.4L9 13.4l7.1-7.1 1.4 1.4z" fill="white"/></svg></button><button class="icon-btn" onclick="app.closeModal()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#F44336"/><path d="M15 9l-6 6M9 9l6 6" stroke="white" stroke-width="2" fill="none"/></svg></button></div>
+        </div>
+    </div>
+    <div id="modalAudio" class="modal-overlay">
+        <div class="modal-card" style="width: 700px;">
+            <div class="modal-header"><span>Audio Settings</span><button style="border:none;background:none;font-size:18px;cursor:pointer;" onclick="app.closeAudioModal()">×</button></div>
+            <div class="modal-body">
+                <p style="font-size: 13px; font-style: italic; color: #444; margin-bottom: 10px;">Choose audiofiles to play on timer events..</p>
+                <div style="display: grid; grid-template-columns: 30px 100px 40px 1fr 80px 40px 40px; gap: 8px; font-weight: 600; font-size: 11px; color: #666; border-bottom: 1px solid #ddd; padding-bottom: 5px;"><span>On</span><span>Event</span><span>File</span><span>Path</span><span>Volume</span><span>Test</span><span>Clear</span></div>
+                <div id="audioList"></div>
+            </div>
+            <div class="modal-footer"><button class="icon-btn" onclick="app.closeAudioModal()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#4CAF50"/><path d="M9 16.2l-3.5-3.5 1.4-1.4L9 13.4l7.1-7.1 1.4 1.4z" fill="white"/></svg></button></div>
+        </div>
+    </div>
+    <div id="modalLicenseUI" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header"><span>Renew License</span><button style="border:none;background:none;font-size:18px;cursor:pointer;" onclick="document.getElementById('modalLicenseUI').classList.remove('active')">×</button></div>
+            <div class="modal-body">
+                <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Enter a new Activation Key to renew or extend your software license.</p>
+                <label style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;display:block;text-align:left;margin-bottom:3px;">Activation Key</label>
+                <input type="text" id="renewActivationKey" class="lock-input" placeholder="AMXX-XXXX-XXXX-XXXX" style="margin-bottom: 10px;">
+                <label style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;display:block;text-align:left;margin-bottom:3px;">Machine Name</label>
+                <input type="text" id="renewMachineName" class="lock-input" placeholder="e.g. AV-LAPTOP-01" style="margin-bottom: 10px; font-family: var(--font-family); letter-spacing: 0.5px; font-size: 14px;">
+                <button id="btnRenewActivate" class="btn-activate">Activate New Key</button>
+                <div id="renewActivationError" style="color: #f87171; font-size: 13px; min-height: 20px; font-weight: 600; text-align: center;"></div>
+            </div>
+        </div>
+    </div>
+    <div id="modalUpdate" class="modal-overlay">
+        <div class="modal-card" style="width: 400px; text-align: center;">
+            <div class="modal-header"><span>Software Update</span></div>
+            <div class="modal-body">
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 15px;">🚀</div>
+                    <h2 id="updateTitle">Update Available!</h2>
+                    <p id="updateMessage" style="font-size: 14px; color: #475569; line-height: 1.6;">A new version of Precision Pulse is available. Would you like to download it now?</p>
+                </div>
+            </div>
+            <div id="updateFooter" class="modal-footer" style="justify-content: center; gap: 12px;">
+                <button id="btnUpdateNow" class="btn-activate" style="width: auto; padding: 10px 20px;">Update Now</button>
+                <button id="btnUpdateLater" onclick="document.getElementById('modalUpdate').classList.remove('active')" style="padding: 10px 20px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; background: white; font-weight: 600;">Later</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const isElectron = window.process && window.process.type === 'renderer';
+        const ipc = isElectron ? require('electron').ipcRenderer : null;
+        class TimerEngine {
+            constructor() { this.remaining = 0; this.duration = 0; this.lastTick = 0; this.isRunning = false; this.isOvertime = false; this.speedFactor = 1.0; this.onTick = null; this.mode = 'Countdown'; this.rafId = null; }
+            setDuration(s, mode = 'Countdown') { this.mode = mode; this.duration = Math.max(1, s) * 1000; if (mode === 'Countdown') this.remaining = this.duration; else this.remaining = 0; this.isOvertime = false; }
+            start() { if (this.isRunning) return; this.isRunning = true; this.lastTick = performance.now(); this.tick(); }
+            pause() { this.isRunning = false; if (this.rafId) cancelAnimationFrame(this.rafId); }
+            stop() { this.isRunning = false; this.isOvertime = false; if (this.rafId) cancelAnimationFrame(this.rafId); }
+            tick() {
+                if (!this.isRunning) return;
+                const now = performance.now(); const delta = (now - this.lastTick) * Math.max(0.01, this.speedFactor); this.lastTick = now;
+                if (this.mode === 'Countdown') { this.remaining -= delta; if (this.remaining <= 0 && !this.isOvertime) this.isOvertime = true; } 
+                else { this.remaining += delta; if (this.mode === 'Count up' && this.remaining >= this.duration && !this.isOvertime) this.isOvertime = true; }
+                if (this.onTick) this.onTick(this.remaining); 
+                this.rafId = requestAnimationFrame(() => this.tick());
+            }
+        }
+        class App {
+            constructor() {
+                const path = isElectron ? require('path') : null;
+                const isProd = window.process && window.process.mainModule && window.process.mainModule.filename.includes('app.asar');
+                const resourceDir = isProd ? window.process.resourcesPath : (window.process ? window.process.cwd() : '');
+                const defaultBuzzer = path ? path.join(resourceDir, 'Buzzer sounds', 'buzzer 1.mp3') : '';
+
+                this.engine = new TimerEngine(); this.projectorOpen = false; this.firedAlerts = new Set(); this.visualState = 'normal';
+                this.cues = JSON.parse(localStorage.getItem('cuetimer_v23')) || [
+                    { id: 1, name: 'Intro', duration: '05:00', type: 'Countdown', alert1: '01:00', alert1_show: true, alert2: '00:30', alert2_show: true, action: 'Overtime', speed: 100 }
+                ];
+                this.audioSettings = JSON.parse(localStorage.getItem('cuetimer_audio')) || { 
+                    alert1: { on: true, path: '', vol: 100 }, 
+                    alert2: { on: true, path: '', vol: 100 }, 
+                    finish: { on: true, path: defaultBuzzer, vol: 100 } 
+                };
+                this.appearance = JSON.parse(localStorage.getItem('cuetimer_appearance')) || { font: "'Inter', sans-serif", scale: 20 };
+                this.selectedCueId = this.cues[0].id; this.runningCueId = null; this.clockMode = false; this.isEditing = false;
+                this.hotkeys = JSON.parse(localStorage.getItem('pp_hotkeys')) || { start: 'S', pause: 'T', reset: 'R', buzzer: 'B' };
+                this.settingHotkey = null; // which hotkey is being reassigned
+                this.initUI(); this.setupListeners(); this.renderTable();
+                if (ipc) {
+                    ipc.on('display-list', (e, list) => this.populateMonitors(list));
+                    ipc.on('projector-status', (e, open) => { this.projectorOpen = open; this.updateProjBtn(); });
+                    ipc.on('audio-file-selected', (e, data) => { 
+                        if(this.audioSettings[data.type]) { 
+                            this.audioSettings[data.type].path = data.path; 
+                            this.audioSettings[data.type].trimStart = 0;
+                            this.audioSettings[data.type].trimEnd = 0;
+                            this.audioSettings[data.type].duration = 0;
+                            this.saveAudio(); 
+                            this.renderAudioList(); 
+                        } 
+                    });
+                    
+                    ipc.on('update-available', (e, version) => {
+                        document.getElementById('updateTitle').innerText = 'Update Available!';
+                        document.getElementById('updateMessage').innerText = `A new version (${version}) of Precision Pulse is available. It is being downloaded in the background.`;
+                        document.getElementById('btnUpdateNow').style.display = 'none';
+                        document.getElementById('modalUpdate').classList.add('active');
+                    });
+
+                    ipc.on('update-downloaded', (e, version) => {
+                        document.getElementById('updateTitle').innerText = 'Update Ready!';
+                        document.getElementById('updateMessage').innerText = `Version ${version} has been downloaded and is ready to install. Update now?`;
+                        const btn = document.getElementById('btnUpdateNow');
+                        btn.style.display = 'block';
+                        btn.innerText = 'Install & Restart';
+                        btn.onclick = () => ipc.send('restart-app');
+                        document.getElementById('modalUpdate').classList.add('active');
+                    });
+                }
+            }
+            initUI() {
+                this.mainDisplay = document.getElementById('mainDisplay'); this.activeName = document.getElementById('activeCueName');
+                this.activeAction = document.getElementById('activeEndAction'); this.tbody = document.getElementById('cueTableBody');
+                this.speedIn = document.getElementById('speedInput'); this.modal = document.getElementById('modalNew');
+                this.monSelect = document.getElementById('monitorSelect'); this.btnProj = document.getElementById('btnPresentation');
+                this.modalAudio = document.getElementById('modalAudio'); this.audioList = document.getElementById('audioList');
+                this.previewPanel = document.getElementById('previewPanel');
+                
+                this.fontSel = document.getElementById('fontSelect');
+                this.scaleSli = document.getElementById('scaleSlider');
+                this.scaleVal = document.getElementById('scaleValue');
+                
+                if (this.fontSel) this.fontSel.value = this.appearance.font;
+                if (this.scaleSli && this.scaleVal) {
+                    this.scaleSli.value = this.appearance.scale;
+                    this.scaleVal.innerText = this.appearance.scale + 'vw';
+                }
+                this.applyAppearance();
+                this.initLicensing();
+
+                this.engine.onTick = (rem) => this.updateAllDisplays(rem);
+            }
+            initLicensing() {
+                const LicensingManager = require('./licensing.js');
+                this.licensing = new LicensingManager();
+                
+                const lockScreen = document.getElementById('lockScreen');
+                const lockTitle = document.getElementById('lockTitle');
+                const lockMessage = document.getElementById('lockMessage');
+                const trialBadge = document.getElementById('trialBadge');
+                const keyInput = document.getElementById('activationKey');
+                const btnActivate = document.getElementById('btnActivate');
+                const errorMsg = document.getElementById('activationError');
+
+                const expiryBadge = document.getElementById('expiryBadge');
+                const warningBanner = document.getElementById('warningBanner');
+                const renewInput = document.getElementById('renewActivationKey');
+                const btnRenew = document.getElementById('btnRenewActivate');
+                const renewError = document.getElementById('renewActivationError');
+
+                this.licensing.onLockStateChange = (isLocked, message, trialRemaining, isActivated, expiryStr, daysRemaining, isGracePeriod, lockoutMs) => {
+                    if (isLocked) {
+                        lockScreen.classList.add('active');
+                        lockTitle.innerText = "Software Locked";
+                        lockMessage.innerText = message;
+                        trialBadge.style.display = 'none';
+                        expiryBadge.style.display = 'none';
+                        warningBanner.style.display = 'none';
+                        btnActivate.innerText = "Activate Software";
+                        btnActivate.disabled = false;
+                        if (this.runningCueId) this.handleStop();
+                    } else {
+                        lockScreen.classList.remove('active');
+                        if (!isActivated) {
+                            trialBadge.style.display = 'block';
+                            trialBadge.innerText = "TRIAL MODE: " + this.licensing.formatTimeRemaining(trialRemaining);
+                            expiryBadge.style.display = 'none';
+                            warningBanner.style.display = 'none';
+                        } else {
+                            trialBadge.style.display = 'none';
+                            expiryBadge.style.display = 'block';
+                            const dt = new Date(expiryStr);
+                            expiryBadge.innerText = "Expires: " + dt.toLocaleDateString();
+                            
+                            if (isGracePeriod) {
+                                warningBanner.style.display = 'block';
+                                warningBanner.className = 'grace';
+                                const totalSec = Math.floor(lockoutMs / 1000);
+                                const h = Math.floor(totalSec / 3600);
+                                const m = Math.floor((totalSec % 3600) / 60);
+                                const s = totalSec % 60;
+                                warningBanner.innerText = `Software is expired! Please renew. Lockout in ${h}h ${m}m ${s}s`;
+                            } else if (daysRemaining <= 15) {
+                                warningBanner.style.display = 'block';
+                                warningBanner.className = '';
+                                warningBanner.innerText = `WARNING: Software license expires in ${daysRemaining} days. Please renew.`;
+                            } else {
+                                warningBanner.style.display = 'none';
+                            }
+                        }
+                    }
+                };
+
+                // Renew License Logic
+                document.getElementById('btnLicenseSettings').addEventListener('click', () => {
+                    document.getElementById('modalLicenseUI').classList.add('active');
+                });
+
+                const renewMachineInput = document.getElementById('renewMachineName');
+                btnRenew.addEventListener('click', async () => {
+                    const key = renewInput.value.trim();
+                    const machineName = renewMachineInput.value.trim();
+                    if (!key) return;
+                    if (!machineName) { renewError.innerText = "Please enter a Machine Name."; return; }
+                    btnRenew.innerText = "Verifying...";
+                    btnRenew.disabled = true;
+                    renewError.innerText = "";
+                    
+                    const res = await this.licensing.activate(key, machineName);
+                    if (!res.success) {
+                        renewError.innerText = res.message || "Activation failed.";
+                        btnRenew.innerText = "Activate New Key";
+                        btnRenew.disabled = false;
+                    } else {
+                        btnRenew.innerText = "Success!";
+                        setTimeout(() => {
+                            document.getElementById('modalLicenseUI').classList.remove('active');
+                            btnRenew.innerText = "Activate New Key";
+                            btnRenew.disabled = false;
+                            renewInput.value = "";
+                            renewMachineInput.value = "";
+                        }, 1000);
+                    }
+                });
+
+                const lockMachineInput = document.getElementById('lockMachineName');
+                btnActivate.addEventListener('click', async () => {
+                    const key = keyInput.value.trim();
+                    const machineName = lockMachineInput.value.trim();
+                    if (!key) return;
+                    if (!machineName) { errorMsg.innerText = "Please enter a Machine Name."; return; }
+                    btnActivate.innerText = "Verifying...";
+                    btnActivate.disabled = true;
+                    errorMsg.innerText = "";
+                    
+                    const res = await this.licensing.activate(key, machineName);
+                    if (!res.success) {
+                        errorMsg.innerText = res.message || "Activation failed.";
+                        btnActivate.innerText = "Activate Software";
+                        btnActivate.disabled = false;
+                    } else {
+                        btnActivate.innerText = "Activated!";
+                    }
+                });
+
+                this.licensing.init();
+            }
+            applyAppearance() {
+                this.mainDisplay.style.fontFamily = this.appearance.font;
+                localStorage.setItem('cuetimer_appearance', JSON.stringify(this.appearance));
+            }
+            setupListeners() {
+                const add = (id, f) => { const el = document.getElementById(id); if (el) el.addEventListener('click', f.bind(this)); };
+                add('btnStart', () => this.handleStart()); add('btnStop', () => this.handleStop());
+                add('btnPause', () => this.engine.pause()); add('btnRestart', () => { this.handleStop(); this.handleStart(); });
+                add('btnAddMin', () => { this.engine.remaining += 60000; }); add('btnSubMin', () => { this.engine.remaining = Math.max(0, this.engine.remaining - 60000); });
+                add('btnClock', () => { this.clockMode = !this.clockMode; this.renderTable(); });
+                add('btnPresentation', () => this.toggleProjector()); add('btnNew', () => this.openModal('new'));
+                add('btnEdit', () => this.openModal('edit')); add('btnDelete', () => this.handleDelete());
+                add('btnCopy', () => { const c = this.cues.find(x => x.id === this.selectedCueId); if (c) this.clipboard = {...c}; });
+                add('btnPaste', () => this.handlePaste()); add('btnAudioSettings', () => this.openAudioModal());
+                add('speedUp', () => this.adjustSpeed(1)); add('speedDown', () => this.adjustSpeed(-1));
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                        document.querySelectorAll('.ribbon-toolbar').forEach(t => t.classList.remove('active'));
+                        item.classList.add('active');
+                        if (item.dataset.tab === 'commands') document.getElementById('ribbon-commands').classList.add('active');
+                        else document.getElementById('ribbon-options').classList.add('active');
+                    });
+                });
+                if (this.monSelect) this.monSelect.addEventListener('change', () => { if (ipc) ipc.send('set-target-display', this.monSelect.value); });
+                if (this.fontSel) this.fontSel.addEventListener('change', () => { this.appearance.font = this.fontSel.value; this.applyAppearance(); });
+                if (this.scaleSli) this.scaleSli.addEventListener('input', () => { this.appearance.scale = this.scaleSli.value; this.scaleVal.innerText = this.appearance.scale + 'vw'; this.applyAppearance(); });
+
+                // === Hotkey System ===
+                this.initHotkeys();
+                const hkBtns = { start: 'hkStart', pause: 'hkPause', reset: 'hkReset', buzzer: 'hkBuzzer' };
+                Object.entries(hkBtns).forEach(([action, btnId]) => {
+                    document.getElementById(btnId).addEventListener('click', () => {
+                        if (this.settingHotkey === action) { this.settingHotkey = null; document.getElementById(btnId).classList.remove('setting-mode'); return; }
+                        document.querySelectorAll('.hotkey-btn').forEach(b => b.classList.remove('setting-mode'));
+                        this.settingHotkey = action;
+                        document.getElementById(btnId).classList.add('setting-mode');
+                    });
+                });
+                document.getElementById('btnBuzzerPlay').addEventListener('click', () => this.playBuzzer());
+
+                document.addEventListener('keydown', (e) => {
+                    // Don't trigger hotkeys when typing in inputs/selects
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
+
+                    // Up/Down Navigation Between Timers
+                    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                        const currentIndex = this.cues.findIndex(c => c.id === this.selectedCueId);
+                        if (currentIndex !== -1) {
+                            let newIndex = currentIndex;
+                            if (e.key === 'ArrowUp' && currentIndex > 0) {
+                                newIndex = currentIndex - 1;
+                            } else if (e.key === 'ArrowDown' && currentIndex < this.cues.length - 1) {
+                                newIndex = currentIndex + 1;
+                            }
+                            
+                            if (newIndex !== currentIndex && !this.isEditing) {
+                                this.selectedCueId = this.cues[newIndex].id;
+                                this.renderTable();
+                                e.preventDefault(); // Prevent page scrolling
+                            }
+                        }
+                        return;
+                    }
+
+                    // If we're setting a hotkey, capture the key
+                    if (this.settingHotkey) {
+                        const newKey = e.key.toUpperCase();
+                        if (newKey.length === 1) {
+                            this.hotkeys[this.settingHotkey] = newKey;
+                            localStorage.setItem('pp_hotkeys', JSON.stringify(this.hotkeys));
+                            this.initHotkeys();
+                            document.querySelectorAll('.hotkey-btn').forEach(b => b.classList.remove('setting-mode'));
+                            this.settingHotkey = null;
+                        }
+                        e.preventDefault();
+                        return;
+                    }
+                    // Execute hotkey actions
+                    const pressed = e.key.toUpperCase();
+                    if (pressed === this.hotkeys.start) { this.handleStart(); e.preventDefault(); }
+                    else if (pressed === this.hotkeys.pause) { this.engine.pause(); e.preventDefault(); }
+                    else if (pressed === this.hotkeys.reset) { this.handleStop(); this.handleStart(); e.preventDefault(); }
+                    else if (pressed === this.hotkeys.buzzer) { this.playBuzzer(); e.preventDefault(); }
+                });
+            }
+            initHotkeys() {
+                document.getElementById('hkStartKey').innerText = this.hotkeys.start;
+                document.getElementById('hkPauseKey').innerText = this.hotkeys.pause;
+                document.getElementById('hkResetKey').innerText = this.hotkeys.reset;
+                document.getElementById('hkBuzzerKey').innerText = this.hotkeys.buzzer;
+            }
+            playBuzzer() {
+                this.playAudio('finish');
+            }
+            adjustSpeed(dir) {
+                let s = parseInt(this.speedIn.value) || 100; if (dir === 1) s += 5; else if (dir === -1) s = Math.max(5, s - 5);
+                this.speedIn.value = s + '%'; if (this.runningCueId) this.engine.speedFactor = s / 100;
+                const c = this.cues.find(x => x.id === this.selectedCueId); if (c) { c.speed = s; this.renderTable(); }
+            }
+            toggleProjector() { if (this.projectorOpen) { if (confirm("Are you sure you want to close the Presentation output?")) ipc.send('close-projector'); } else ipc.send('launch-projector'); }
+            updateProjBtn() { this.btnProj.classList.toggle('active-toggle', this.projectorOpen); }
+            populateMonitors(list) { this.monSelect.innerHTML = '<option value="auto">AUTO (Detect HDMI)</option>'; list.forEach(m => { const opt = document.createElement('option'); opt.value = m.id; opt.innerText = `${m.label} ${m.isPrimary ? '(Primary)' : ''}`; this.monSelect.appendChild(opt); }); }
+            openAudioModal() { this.renderAudioList(); this.modalAudio.classList.add('active'); }
+            closeAudioModal() { this.modalAudio.classList.remove('active'); }
+            validateTrim(key, type, inputEl) {
+                const s = this.audioSettings[key];
+                if (!s) return;
+                
+                let val = parseFloat(inputEl.value);
+                if (isNaN(val)) val = 0;
+                
+                let maxDur = s.duration || 9999;
+                const errEl = document.getElementById(`trim_err_${key}`);
+                if (errEl) errEl.innerText = "";
+
+                if (type === 'start') {
+                    if (val < 0) val = 0;
+                    if (s.trimEnd && val >= s.trimEnd - 0.1) {
+                        val = Math.max(0, s.trimEnd - 0.1);
+                        if (errEl) errEl.innerText = "Start must be less than End";
+                    }
+                    s.trimStart = val;
+                } else if (type === 'end') {
+                    if (val > maxDur) val = maxDur;
+                    if (s.trimStart !== undefined && val <= s.trimStart + 0.1) {
+                        val = Math.min(maxDur, s.trimStart + 0.1);
+                        if (errEl) errEl.innerText = "End must be greater than Start";
+                    }
+                    s.trimEnd = val;
+                }
+                
+                this.saveAudio();
+                
+                if (parseFloat(inputEl.value) !== val) {
+                    inputEl.value = Number.isInteger(val) ? val : val.toFixed(1);
+                }
+            }
+
+            renderAudioList() {
+                this.audioList.innerHTML = ''; [['alert1', 'Alert 1'], ['alert2', 'Alert 2'], ['finish', 'Timer Ends']].forEach(([key, label]) => {
+                    const s = this.audioSettings[key];
+                    const container = document.createElement('div');
+                    container.style.display = 'flex';
+                    container.style.flexDirection = 'column';
+                    container.style.gap = '5px';
+                    container.style.borderBottom = '1px solid #eee';
+                    container.style.padding = '8px 0';
+                    
+                    const row = document.createElement('div');
+                    row.className = 'audio-row';
+                    row.style.borderBottom = 'none';
+                    row.style.padding = '0';
+                    row.innerHTML = `<input type="checkbox" ${s.on?'checked':''}><span>${label}</span><button class="icon-btn-small" onclick="ipc.send('select-audio-file','${key}')"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="#666"/></svg></button><span class="filename">${s.path.split(/[\\\/]/).pop() || 'No file selected'}</span><div class="speed-spinner"><input type="text" value="${s.vol}" onchange="app.audioSettings['${key}'].vol=Math.min(100, Math.max(0, parseInt(this.value)||0));app.saveAudio()"></div><button class="icon-btn-small" onclick="app.playAudio('${key}')"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z" fill="#0078d4"/></svg></button><button class="icon-btn-small" onclick="app.audioSettings['${key}'].path='';app.saveAudio();app.renderAudioList()"><svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="#D32F2F"/></svg></button>`;
+                    row.querySelector('input').onclick = (e) => { s.on = e.target.checked; this.saveAudio(); };
+                    container.appendChild(row);
+
+                    if (s.path) {
+                        const trimPanel = document.createElement('div');
+                        trimPanel.style.display = 'flex';
+                        trimPanel.style.alignItems = 'center';
+                        trimPanel.style.gap = '15px';
+                        trimPanel.style.paddingLeft = '30px';
+                        trimPanel.style.fontSize = '12px';
+                        trimPanel.style.color = '#555';
+                        trimPanel.style.background = '#f8fafc';
+                        trimPanel.style.padding = '8px 10px 8px 30px';
+                        trimPanel.style.borderRadius = '4px';
+
+                        trimPanel.innerHTML = `
+                            <span style="font-weight:600; color:#0078d4;">Trim:</span>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <span>Start:</span>
+                                <input type="number" id="trim_start_${key}" step="0.1" min="0" value="${s.trimStart || 0}" style="width:60px; padding:2px 4px; border:1px solid #ccc; border-radius:3px;" oninput="app.validateTrim('${key}', 'start', this)" onblur="app.validateTrim('${key}', 'start', this)">
+                                <span>s</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:5px;">
+                                <span>End:</span>
+                                <input type="number" id="trim_end_${key}" step="0.1" min="0" value="${s.trimEnd || 0}" style="width:60px; padding:2px 4px; border:1px solid #ccc; border-radius:3px;" oninput="app.validateTrim('${key}', 'end', this)" onblur="app.validateTrim('${key}', 'end', this)">
+                                <span>s</span>
+                            </div>
+                            <div style="font-size:11px; color:#888;">Duration: <span id="dur_${key}">${(s.duration || 0).toFixed(1)}s</span></div>
+                            <div style="display:flex; align-items:center; gap:5px; margin-left: 10px; border-left: 1px solid #ccc; padding-left: 10px;">
+                                <span style="font-weight:600; color:#0078d4;">Repeat:</span>
+                                <input type="number" id="repeat_${key}" step="1" min="0" value="${s.repeat || 0}" style="width:50px; padding:2px 4px; border:1px solid #ccc; border-radius:3px;" onchange="app.audioSettings['${key}'].repeat=Math.max(0, parseInt(this.value)||0); app.saveAudio();">
+                                <span style="font-size:11px; color:#888;">times</span>
+                            </div>
+                            <button style="padding:3px 10px; border:1px solid #0078d4; background:#e0f2fe; color:#0078d4; border-radius:3px; cursor:pointer; font-weight:600;" onclick="app.previewTrim('${key}')">Preview Trim</button>
+                            <span id="trim_err_${key}" style="color:red; font-size:10px; font-weight:600; margin-left:10px;"></span>
+                        `;
+                        container.appendChild(trimPanel);
+                        if (!s.duration) app.loadAudioDuration(key, s.path);
+                    }
+
+                    this.audioList.appendChild(container);
+                });
+            }
+
+            loadAudioDuration(key, filePath) {
+                const s = this.audioSettings[key];
+                if (!s || s.durationLoading) return;
+                s.durationLoading = true;
+                
+                const audio = new Audio(filePath);
+                
+                audio.addEventListener('loadedmetadata', () => {
+                    s.duration = audio.duration;
+                    if (!s.trimEnd || s.trimEnd === 0) {
+                        s.trimEnd = audio.duration;
+                    }
+                    s.durationLoading = false;
+                    audio.src = '';
+                    
+                    this.saveAudio();
+                    
+                    const durEl = document.getElementById('dur_' + key);
+                    if (durEl) durEl.innerText = audio.duration.toFixed(1) + 's';
+                    
+                    const endInput = document.getElementById('trim_end_' + key);
+                    if (endInput && (endInput.value === '0' || endInput.value === '')) {
+                        endInput.value = audio.duration.toFixed(1);
+                    }
+                }, { once: true });
+                
+                audio.addEventListener('error', () => {
+                    s.durationLoading = false;
+                    console.error('Could not load audio duration for', key);
+                }, { once: true });
+                
+                audio.load();
+            }
+
+            previewTrim(key) {
+                const s = this.audioSettings[key];
+                if (!s || !s.path) return;
+                
+                try {
+                    // Stop any currently playing preview
+                    if (this.previewAudio) {
+                        this.previewAudio.pause();
+                        this.previewAudio.src = '';
+                        this.previewAudio = null;
+                    }
+                    if (this.previewTimer) {
+                        clearTimeout(this.previewTimer);
+                        this.previewTimer = null;
+                    }
+                    
+                    const audio = new Audio(s.path);
+                    audio.volume = (s.vol || 100) / 100;
+                    
+                    const start = parseFloat(s.trimStart) || 0;
+                    const end = parseFloat(s.trimEnd) || 0;
+                    const duration = Math.max(0.1, end - start);
+                    const repeatCount = parseInt(s.repeat) || 0;
+                    let currentPlayCount = 0;
+                    
+                    const playSegment = () => {
+                        audio.currentTime = start;
+                        audio.play();
+                        
+                        this.previewTimer = setTimeout(() => {
+                            audio.pause();
+                            if (currentPlayCount < repeatCount) {
+                                currentPlayCount++;
+                                playSegment();
+                            } else {
+                                audio.src = '';
+                                this.previewAudio = null;
+                                this.previewTimer = null;
+                            }
+                        }, duration * 1000);
+                    };
+
+                    audio.addEventListener('canplaythrough', playSegment, { once: true });
+                    
+                    this.previewAudio = audio;
+                    
+                    const errEl = document.getElementById('trim_err_' + key);
+                    if (errEl) errEl.innerText = '';
+                    
+                } catch(err) {
+                    console.error('Preview error:', err);
+                    const errEl = document.getElementById('trim_err_' + key);
+                    if (errEl) errEl.innerText = 'Error playing preview.';
+                }
+            }
+
+            saveAudio() { localStorage.setItem('cuetimer_audio', JSON.stringify(this.audioSettings)); }
+
+            playAudio(key) {
+                const s = this.audioSettings[key]; 
+                if (!s || !s.path || !s.on) return;
+                
+                try {
+                    if (!this.activeAudios) this.activeAudios = [];
+                    if (!this.activeTimeouts) this.activeTimeouts = [];
+                    
+                    const audio = new Audio(s.path);
+                    audio.volume = (s.vol || 100) / 100;
+                    this.activeAudios.push(audio);
+                    
+                    const start = parseFloat(s.trimStart) || 0;
+                    const end = parseFloat(s.trimEnd) || 0;
+                    const duration = Math.max(0.1, end - start);
+                    const repeatCount = parseInt(s.repeat) || 0;
+                    let currentPlayCount = 0;
+                    
+                    const playSegment = () => {
+                        audio.currentTime = start;
+                        audio.play().catch(e => console.log('Audio interrupted:', e));
+                        
+                        const t = setTimeout(() => {
+                            audio.pause();
+                            if (currentPlayCount < repeatCount) {
+                                currentPlayCount++;
+                                playSegment();
+                            } else {
+                                audio.src = '';
+                                const idx = this.activeAudios.indexOf(audio);
+                                if(idx > -1) this.activeAudios.splice(idx, 1);
+                            }
+                        }, duration * 1000);
+                        this.activeTimeouts.push(t);
+                    };
+
+                    audio.addEventListener('canplaythrough', playSegment, { once: true });
+                    
+                } catch (e) {
+                    console.log("Audio Error:", e);
+                }
+            }
+            openModal(mode) {
+                this.modalMode = mode; const c = mode === 'new' ? { id: Date.now(), name: 'New Cue', duration: '10:00', type: 'Countdown', alert1: '01:30', alert1_show: true, alert2: '00:30', alert2_show: true, action: 'Overtime', speed: 100 } : this.cues.find(x => x.id === this.selectedCueId);
+                if (!c) return; document.getElementById('mTitle').innerText = mode === 'new' ? 'New Timer' : 'Edit Timer'; document.getElementById('mId').value = c.id; document.getElementById('mName').value = c.name; document.getElementById('mDuration').value = c.duration; document.getElementById('mType').value = c.type; document.getElementById('mAlert1').value = c.alert1; document.getElementById('mAlert1Show').checked = !!c.alert1_show; document.getElementById('mAlert2').value = c.alert2; document.getElementById('mAlert2Show').checked = !!c.alert2_show; document.getElementById('mAction').value = c.action; document.getElementById('mSpeed').value = (c.speed||100) + '%';
+                this.modal.classList.add('active');
+            }
+            closeModal() { this.modal.classList.remove('active'); }
+            saveModal() {
+                const data = { id: parseInt(document.getElementById('mId').value), name: document.getElementById('mName').value || 'Unnamed Cue', duration: this.vT(document.getElementById('mDuration').value), type: document.getElementById('mType').value, alert1: this.vT(document.getElementById('mAlert1').value), alert1_show: document.getElementById('mAlert1Show').checked, alert2: this.vT(document.getElementById('mAlert2').value), alert2_show: document.getElementById('mAlert2Show').checked, action: document.getElementById('mAction').value, speed: Math.max(5, parseInt(document.getElementById('mSpeed').value) || 100) };
+                if (this.modalMode === 'new') this.cues.push(data); else { const idx = this.cues.findIndex(x => x.id === data.id); if(idx !== -1) this.cues[idx] = data; if (this.runningCueId === data.id) this.engine.speedFactor = data.speed / 100; }
+                this.renderTable(); this.closeModal();
+            }
+            handleStart(cue = null) { 
+                if (document.getElementById('lockScreen').classList.contains('active')) return;
+                const c = cue || this.cues.find(x => x.id === this.selectedCueId); if (!c) return; this.selectedCueId = c.id; if (this.runningCueId !== c.id) { this.engine.stop(); this.engine.setDuration(this.tToS(c.duration), c.type); this.engine.speedFactor = (c.speed||100)/100; this.firedAlerts.clear(); this.visualState = 'normal'; } this.runningCueId = c.id; this.engine.start(); this.renderTable(); }
+            handleStop() { 
+                this.engine.stop(); 
+                this.runningCueId = null; 
+                this.renderTable(); 
+                this.updateAllDisplays(0); 
+                this.firedAlerts.clear(); 
+                this.visualState = 'normal'; 
+                
+                if (this.activeAudios) {
+                    this.activeAudios.forEach(a => { a.pause(); a.src = ''; });
+                    this.activeAudios = [];
+                }
+                if (this.activeTimeouts) {
+                    this.activeTimeouts.forEach(t => clearTimeout(t));
+                    this.activeTimeouts = [];
+                }
+                if (this.previewAudio) {
+                    this.previewAudio.pause();
+                    this.previewAudio.src = '';
+                    this.previewAudio = null;
+                }
+                if (this.previewTimer) {
+                    clearTimeout(this.previewTimer);
+                    this.previewTimer = null;
+                }
+            }
+            handleDelete() { if(this.cues.length <= 1) return; this.cues = this.cues.filter(x => x.id !== this.selectedCueId); this.selectedCueId = this.cues[0].id; this.renderTable(); }
+            handlePaste() { if(!this.clipboard) return; const c = {...this.clipboard, id: Date.now()}; this.cues.push(c); this.selectedCueId = c.id; this.renderTable(); }
+            renderTable() {
+                if (this.isEditing) return; this.tbody.innerHTML = '';
+                this.cues.forEach((c, i) => {
+                    const tr = document.createElement('tr'); tr.classList.toggle('selected', c.id === this.selectedCueId); tr.classList.toggle('running', c.id === this.runningCueId); if (c.id === this.selectedCueId) { this.activeName.innerText = c.name; this.activeAction.innerText = c.action; if(this.speedIn) this.speedIn.value = (c.speed||100) + '%'; }
+                    tr.onclick = () => { if(!this.isEditing) { this.selectedCueId = c.id; this.renderTable(); } };
+                    tr.innerHTML = `<td>${i + 1}</td><td data-f="name">${c.name}</td><td data-f="duration">${c.duration}</td><td data-f="speed">${c.speed||100}%</td><td data-f="type">${c.type}</td><td data-f="alert1">${c.alert1}</td><td data-f="alert2">${c.alert2}</td><td data-f="action">${c.action}</td>`;
+                    tr.querySelectorAll('[data-f]').forEach(td => td.ondblclick = (e) => { e.stopPropagation(); this.editCell(td, c, td.dataset.f); });
+                    this.tbody.appendChild(tr);
+                });
+                localStorage.setItem('cuetimer_v23', JSON.stringify(this.cues));
+            }
+            editCell(td, c, f) {
+                this.isEditing = true;
+                if (f === 'type' || f === 'action') {
+                    const sel = document.createElement('select'); sel.className = 'cell-input';
+                    const opts = f === 'type' ? ['Countdown', 'Clock', 'Count up', 'Stopwatch'] : ['Overtime', 'Hold', 'Stop', 'Repeat', 'Start Next'];
+                    opts.forEach(o => { const opt = document.createElement('option'); opt.value = o; opt.innerText = o; if (o === c[f]) opt.selected = true; sel.appendChild(opt); });
+                    td.innerHTML = ''; td.appendChild(sel); sel.focus();
+                    
+                    const save = () => { 
+                        if (!this.isEditing) return; // Prevent double execution
+                        c[f] = sel.value; 
+                        if (f === 'type' && this.runningCueId === c.id) this.engine.mode = sel.value; 
+                        this.isEditing = false; 
+                        td.innerHTML = c[f];
+                        if (c.id === this.selectedCueId) { this.activeName.innerText = c.name; this.activeAction.innerText = c.action; }
+                        localStorage.setItem('cuetimer_v23', JSON.stringify(this.cues));
+                    };
+                    sel.onchange = save; 
+                    sel.onblur = save; 
+                    return;
+                }
+                
+                const input = document.createElement('input'); input.className = 'cell-input'; input.value = c[f]; td.innerHTML = ''; td.appendChild(input); input.focus();
+                
+                const saveInput = () => { 
+                    if (!this.isEditing) return; // Prevent double execution
+                    let v = input.value; 
+                    if (f==='duration'||f.includes('alert')) v = this.vT(v); 
+                    else if(f==='speed') v = Math.max(5, parseInt(v)||100); 
+                    c[f] = v; 
+                    this.isEditing = false; 
+                    
+                    td.innerHTML = f === 'speed' ? `${c[f]}%` : c[f]; 
+                    
+                    if (c.id === this.selectedCueId) { 
+                        this.activeName.innerText = c.name; 
+                        this.activeAction.innerText = c.action; 
+                        if(this.speedIn) this.speedIn.value = (c.speed||100) + '%'; 
+                    }
+                    localStorage.setItem('cuetimer_v23', JSON.stringify(this.cues));
+                };
+                
+                input.onblur = saveInput;
+                input.onkeydown = (e) => { if (e.key === 'Enter') saveInput(); };
+            }
+            updateAllDisplays(rem) {
+                const ts = this.clockMode ? new Date().toLocaleTimeString() : this.formatTime(rem);
+                if (this.lastTs !== ts) {
+                    this.mainDisplay.innerHTML = ts;
+                    this.lastTs = ts;
+                }
+                
+                let currentVisual = 'normal';
+                
+                if (this.runningCueId) {
+                    const c = this.cues.find(x => x.id === this.runningCueId);
+                    if (c) {
+                        const a1s = this.tToS(c.alert1); 
+                        const a2s = this.tToS(c.alert2);
+                        
+                        // Pure Math remaining time calculation for all modes
+                        let remSec = rem / 1000;
+                        if (this.engine.mode === 'Count up') {
+                            remSec = (this.engine.duration - rem) / 1000;
+                        } else if (this.engine.mode === 'Stopwatch' || this.engine.mode === 'Clock') {
+                            remSec = Infinity; // Alerts are disabled for open-ended modes
+                        }
+
+                        // 🏆 Unified Master Alert States
+                        // 2nd Priority (Local): Edit -> 'Show' Checkbox
+                        let a1_active = (c.alert1_show !== false && c.alert1_show !== 'false') && (a1s > 0);
+                        let a2_active = (c.alert2_show !== false && c.alert2_show !== 'false') && (a2s > 0);
+
+                        // 1st Priority (Global): Options -> Audio Checkbox
+                        if (this.audioSettings['alert1'] && !this.audioSettings['alert1'].on) a1_active = false;
+                        if (this.audioSettings['alert2'] && !this.audioSettings['alert2'].on) a2_active = false;
+
+                        // Audio Triggers (Only fire if Master State is active)
+                        if (a1_active && remSec <= a1s && !this.firedAlerts.has('a1')) { this.playAudio('alert1'); this.firedAlerts.add('a1'); }
+                        if (a2_active && remSec <= a2s && !this.firedAlerts.has('a2')) { this.playAudio('alert2'); this.firedAlerts.add('a2'); }
+                        
+                        const finished = (this.engine.mode === 'Countdown' && rem <= 0) || (this.engine.mode === 'Count up' && rem >= this.engine.duration);
+                        if (finished && !this.firedAlerts.has('finish')) { this.playAudio('finish'); this.firedAlerts.add('finish'); }
+
+                        // Visual State (Only trigger if Master State is active)
+                        if (finished) {
+                            currentVisual = 'overtime';
+                        } else if (a2_active && remSec <= a2s) {
+                            currentVisual = 'alert_active';
+                        } else if (a1_active && remSec <= a1s) {
+                            if (!a2_active) {
+                                currentVisual = 'alert_active'; // Permanent Yellow
+                            } else {
+                                if (remSec >= a1s - 2) {
+                                    currentVisual = 'alert_active'; // Flashes exactly while remSec is between a1s and a1s-2
+                                }
+                            }
+                        }
+                        
+                        // End Actions
+                        if (finished && !this.engine.isOvertime) {
+                            if (c.action === 'Stop') this.handleStop(); else if (c.action === 'Hold') { this.engine.pause(); this.renderTable(); } else if (c.action === 'Repeat') { this.handleStop(); this.handleStart(c); } else if (c.action === 'Start Next') { const idx = this.cues.findIndex(x => x.id === this.runningCueId); if (idx < this.cues.length - 1) this.handleStart(this.cues[idx + 1]); else this.handleStop(); }
+                        }
+                    }
+                }
+                
+                this.visualState = currentVisual;
+
+                if (this.lastVisual !== currentVisual) {
+                    this.previewPanel.classList.remove('alert-yellow', 'alert-red');
+                    if (currentVisual === 'alert_active') this.previewPanel.classList.add('alert-yellow');
+                    else if (currentVisual === 'overtime') this.previewPanel.classList.add('alert-red');
+                    this.lastVisual = currentVisual;
+                }
+                
+                const ipcPayload = JSON.stringify({ t: ts, v: currentVisual, a: this.appearance });
+                if (this.lastIpcPayload !== ipcPayload) {
+                    if (ipc) ipc.send('update-timer', { t: ts, v: currentVisual, a: this.appearance });
+                    this.lastIpcPayload = ipcPayload;
+                }
+            }
+            vT(s) { const n = s.replace(/[^0-9]/g, '').padStart(4, '0'); return `${parseInt(n.slice(0, -2))}:${n.slice(-2)}`; }
+            tToS(s) { const p = s.split(':').map(Number); return (p[0] * 60) + p[1]; }
+            formatTime(ms) { const s = Math.floor(Math.abs(ms) / 1000); const t = `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`; return ms < 0 ? `<span class="sign">+</span>${t}` : t; }
+        }
+        window.app = new App();
+    </script>
+</body>
+</html>

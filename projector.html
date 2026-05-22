@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cueTimer Pro - Output</title>
+    <style>
+        @font-face { font-family: 'Inter'; src: url('fonts/Inter.ttf') format('truetype'); }
+        @font-face { font-family: 'Roboto'; src: url('fonts/Roboto.ttf') format('truetype'); }
+        @font-face { font-family: 'Montserrat'; src: url('fonts/Montserrat.ttf') format('truetype'); }
+        @font-face { font-family: 'Bebas Neue'; src: url('fonts/BebasNeue.ttf') format('truetype'); }
+        @font-face { font-family: 'Share Tech Mono'; src: url('fonts/ShareTechMono.ttf') format('truetype'); }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.5s ease-in-out, color 0.5s ease-in-out;
+        }
+        #timer { 
+            font-size: 20vw; /* Default size */
+            font-weight: 800; 
+            line-height: 1; 
+            white-space: nowrap; 
+            text-align: center;
+            display: inline-block;
+            position: relative;
+            /* Visual Optimizations */
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
+            text-shadow: 0 10px 40px rgba(0,0,0,0.6), 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .sign {
+            display: inline;
+            margin-right: 1vw;
+        }
+        
+        /* Visual Alert Classes */
+        body.alert-yellow { background-color: #facc15 !important; } 
+        body.alert-red { background-color: #ef4444 !important; }    
+    </style>
+</head>
+<body>
+    <div id="timer">00:00</div>
+    <script>
+        const { ipcRenderer } = require('electron');
+        const timerEl = document.getElementById('timer');
+        let currentFont = '';
+        let currentScale = '';
+        
+        ipcRenderer.on('timer-tick', (event, data) => {
+            // Render HTML to support the floating '+' sign span
+            timerEl.innerHTML = data.t;
+            
+            // Sync with Dashboard states
+            document.body.classList.remove('alert-yellow', 'alert-red');
+            if (data.v === 'alert_active') {
+                document.body.classList.add('alert-yellow');
+            } else if (data.v === 'overtime') {
+                document.body.classList.add('alert-red');
+            }
+
+            // Sync Appearance Settings
+            if (data.a) {
+                if (currentFont !== data.a.font) {
+                    currentFont = data.a.font;
+                    timerEl.style.fontFamily = currentFont;
+                }
+                if (currentScale !== data.a.scale) {
+                    currentScale = data.a.scale;
+                    timerEl.style.fontSize = currentScale + 'vw';
+                }
+            }
+        });
+
+        // Add Escape key listener to close projector
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                ipcRenderer.send('close-projector');
+            }
+        });
+    </script>
+</body>
+</html>
