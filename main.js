@@ -24,7 +24,9 @@ function createMainWindow() {
     });
 
     mainWindow.loadFile('bundle.html');
-    mainWindow.webContents.openDevTools();
+    if (!app.isPackaged) {
+        mainWindow.webContents.openDevTools();
+    }
     
     mainWindow.webContents.on('did-finish-load', () => {
         sendDisplayList();
